@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices.JavaScript;
+using image_gallery.middlewares;
 using image_gallery.utils;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddSingleton<IConfig, Config>();
 builder.Services.AddSingleton<IAzureContainerStorageConnector, AzureContainerStorageConnector>();
 builder.Services.AddSingleton<IAzureContainerStorageFacade, AzureContainerStorageFacade>();
+builder.Services.AddScoped<ErrorHandlingMiddleware>();
 builder.Services.AddControllers();
 
 
@@ -31,7 +33,7 @@ foreach(var startupTask in startupTasks)
 app.UseHttpsRedirection();
 app.UseCors("FrontEndClient");
 app.UseAuthorization();
-
+app.UseMiddleware<ErrorHandlingMiddleware>();
 app.MapControllers();
 app.Run();
 

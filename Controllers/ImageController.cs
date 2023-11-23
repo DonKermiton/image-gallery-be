@@ -35,8 +35,16 @@ public class ImageController : ControllerBase
     }
 
     [HttpPost]
-    public Task<ContainerFile> Post(IFormFile image)
+    public async Task<IActionResult> Post(IFormFile image)
     {
-        return this.AzureContainerStorageCache.Post(image);
+        try
+        {
+            var result = await this.AzureContainerStorageCache.Post(image);
+            return Ok(result);
+        }
+        catch (BadRequestException err)
+        {
+            return BadRequest(err.Message);
+        }
     }
 }

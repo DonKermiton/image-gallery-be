@@ -2,6 +2,8 @@ using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 
 namespace image_gallery.utils;
 public class ContainerFile
@@ -30,6 +32,17 @@ public class AzureContainerStorageFacade : IAzureContainerStorageFacade
 {
     private IAzureContainerStorageConnector AzureContainerStorageConnector;
     private readonly IConfig config;
+    private List<string> AllowedMimes = new List<string>
+    {
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/bmp",
+        "image/svg+xml",
+        "image/webp",
+        "image/tiff",
+        "image/heif"
+    };
 
     public AzureContainerStorageFacade(IAzureContainerStorageConnector azureContainerStorageConnector, IConfig config)
     {
@@ -65,7 +78,13 @@ public class AzureContainerStorageFacade : IAzureContainerStorageFacade
         string blobName = Guid.NewGuid().ToString().ToLower().Replace("-", String.Empty);
         BlobClient blobClient = containerClient.GetBlobClient(blobName);
         var contentType = image.ContentType;
+        bool hasCorrectMime = this.AllowedMimes.Contains(contentType);
 
+        if (!hasCorrectMime)
+        {
+            throw new BadRequestException("Invalid mime type. Check your image and try again");
+        }
+        
         await using (Stream file = image.OpenReadStream())
         {
             var result = await blobClient.UploadAsync(file, new BlobHttpHeaders { ContentType = contentType }); 
@@ -95,5 +114,13 @@ public class AzureContainerStorageFacade : IAzureContainerStorageFacade
         };
         blobSasBuilder.SetPermissions(BlobSasPermissions.Read);
         return blobSasBuilder;
+    }
+}
+
+public class BadRequestException: System.Exception
+{
+    public BadRequestException(string message): base(message)
+    {
+            
     }
 }
