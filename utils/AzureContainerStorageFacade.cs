@@ -45,14 +45,7 @@ public class AzureContainerStorageFacade : IAzureContainerStorageFacade
         await foreach (BlobItem blobItem in containerClient.GetBlobsAsync())
         {
             var blobClient = containerClient.GetBlobClient(blobItem.Name);
-            var blobSasBuilder = new BlobSasBuilder()
-            {
-                BlobContainerName = "images",
-                BlobName = blobItem.Name,
-                ExpiresOn = DateTime.UtcNow.AddMinutes(5), //Let SAS token expire after 5 minutes.
-                Protocol = SasProtocol.Https
-            };
-            blobSasBuilder.SetPermissions(BlobSasPermissions.Read);
+            BlobSasBuilder blobSasBuilder = GetImageLink(blobItem.Name);
             results.Add(new ContainerFile(blobClient.GenerateSasUri(blobSasBuilder).AbsoluteUri, blobItem.Name));
         }
 
@@ -73,18 +66,13 @@ public class AzureContainerStorageFacade : IAzureContainerStorageFacade
         BlobClient blobClient = containerClient.GetBlobClient(blobName);
         var contentType = image.ContentType;
 
-        using (Stream file = image.OpenReadStream())
+        await using (Stream file = image.OpenReadStream())
         {
             var result = await blobClient.UploadAsync(file, new BlobHttpHeaders { ContentType = contentType }); 
         }
-        var blobSasBuilder = new BlobSasBuilder()
-        {
-            BlobContainerName = "images",
-            BlobName = blobClient.Name,
-            ExpiresOn = DateTime.UtcNow.AddMinutes(5), //Let SAS token expire after 5 minutes.
-            Protocol = SasProtocol.Https
-        };
-        blobSasBuilder.SetPermissions(BlobSasPermissions.Read);
+
+        BlobSasBuilder blobSasBuilder = this.GetImageLink(blobClient.Name);
+        
         return new ContainerFile(blobClient.GenerateSasUri(blobSasBuilder).AbsoluteUri, blobClient.Name);
     }
 
@@ -94,5 +82,18 @@ public class AzureContainerStorageFacade : IAzureContainerStorageFacade
         BlobClient blobClient = containerClient.GetBlobClient(uuid);
         var result = await blobClient.DeleteIfExistsAsync();
         return result;
+    }
+
+    private BlobSasBuilder GetImageLink(string name)
+    {
+        var blobSasBuilder = new BlobSasBuilder()
+        {
+            BlobContainerName = "images",
+            BlobName = name,
+            ExpiresOn = DateTime.UtcNow.AddMinutes(5), //Let SAS token expire after 5 minutes.
+            Protocol = SasProtocol.Https
+        };
+        blobSasBuilder.SetPermissions(BlobSasPermissions.Read);
+        return blobSasBuilder;
     }
 }
