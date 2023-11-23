@@ -7,10 +7,10 @@ namespace image_gallery.Controllers;
 [Route("/images")]
 public class ImageController : ControllerBase
 {
-    private readonly IAzureContainerStorageCache AzureContainerStorageCache;
+    private readonly IAzureContainerStorageFacade AzureContainerStorageCache;
 
     
-    public ImageController(IAzureContainerStorageCache azureContainerStorageCache)
+    public ImageController(IAzureContainerStorageFacade azureContainerStorageCache)
     {
         this.AzureContainerStorageCache = azureContainerStorageCache;
     }
@@ -22,15 +22,21 @@ public class ImageController : ControllerBase
         return this.AzureContainerStorageCache.Get();
     }
 
-    [HttpGet("{uuid}")]
-    public Uri GetImage(string uuid)
+    [HttpGet("{name}")]
+    public ActionResult<Uri> GetImage(string name)
     {
-        return this.AzureContainerStorageCache.GetByUuid(uuid);
+        return Ok(this.AzureContainerStorageCache.GetByUuid(name));
     }
 
     [HttpDelete("{name}")]
-    public Task<bool> Delete(string name)
+    public OkObjectResult Delete(string name)
     {
-        return this.AzureContainerStorageCache.Delete(name);
+        return Ok(this.AzureContainerStorageCache.Delete(name));
+    }
+
+    [HttpPost]
+    public Task<ContainerFile> Post(IFormFile image)
+    {
+        return this.AzureContainerStorageCache.Post(image);
     }
 }

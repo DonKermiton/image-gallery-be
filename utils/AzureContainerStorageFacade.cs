@@ -16,17 +16,17 @@ public class ContainerFile
 
 
 }
-public interface IAzureContainerStorageCache
+public interface IAzureContainerStorageFacade
 {
     Task<List<ContainerFile>> Get();
     Uri GetByUuid(string uuid);
-    Task<Response<BlobContentInfo>> Post(Stream image);
+    Task<ContainerFile> Post(IFormFile image);
     Task<bool> Delete(string uuid);
 }
 
 
 
-public class AzureContainerStorageFacade : IAzureContainerStorageCache
+public class AzureContainerStorageFacade : IAzureContainerStorageFacade
 {
     private IAzureContainerStorageConnector AzureContainerStorageConnector;
     private readonly IConfig config;
@@ -40,7 +40,6 @@ public class AzureContainerStorageFacade : IAzureContainerStorageCache
     public async Task<List<ContainerFile>> Get()
     {
         BlobContainerClient containerClient = this.AzureContainerStorageConnector.ContainerClient!;
-        BlobServiceClient blobServiceClient = new BlobServiceClient(this.config.StorageConnectionString);
 
         List<ContainerFile> results = new List<ContainerFile>();
         await foreach (BlobItem blobItem in containerClient.GetBlobsAsync())
@@ -67,13 +66,26 @@ public class AzureContainerStorageFacade : IAzureContainerStorageCache
         return blobClient.Uri;
     }
 
-    public async Task<Response<BlobContentInfo>> Post(Stream image)
+    public async Task<ContainerFile> Post(IFormFile image)
     {
         BlobContainerClient containerClient = this.AzureContainerStorageConnector.ContainerClient!;
         string blobName = Guid.NewGuid().ToString().ToLower().Replace("-", String.Empty);
         BlobClient blobClient = containerClient.GetBlobClient(blobName);
-        var result = await blobClient.UploadAsync(image);
-        return result;
+        var contentType = image.ContentType;
+
+        using (Stream file = image.OpenReadStream())
+        {
+            var result = await blobClient.UploadAsync(file, new BlobHttpHeaders { ContentType = contentType }); 
+        }
+        var blobSasBuilder = new BlobSasBuilder()
+        {
+            BlobContainerName = "images",
+            BlobName = blobClient.Name,
+            ExpiresOn = DateTime.UtcNow.AddMinutes(5), //Let SAS token expire after 5 minutes.
+            Protocol = SasProtocol.Https
+        };
+        blobSasBuilder.SetPermissions(BlobSasPermissions.Read);
+        return new ContainerFile(blobClient.GenerateSasUri(blobSasBuilder).AbsoluteUri, blobClient.Name);
     }
 
     public async Task<bool> Delete(string uuid)

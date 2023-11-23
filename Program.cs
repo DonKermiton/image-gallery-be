@@ -3,11 +3,19 @@ using image_gallery.utils;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontEndClient", policy =>
+    {
+        policy.AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowAnyOrigin();
+    });
+});
 
 builder.Services.AddSingleton<IConfig, Config>();
 builder.Services.AddSingleton<IAzureContainerStorageConnector, AzureContainerStorageConnector>();
-builder.Services.AddSingleton<IAzureContainerStorageCache, AzureContainerStorageFacade>();
+builder.Services.AddSingleton<IAzureContainerStorageFacade, AzureContainerStorageFacade>();
 builder.Services.AddControllers();
 
 
@@ -21,7 +29,7 @@ foreach(var startupTask in startupTasks)
 
 
 app.UseHttpsRedirection();
-
+app.UseCors("FrontEndClient");
 app.UseAuthorization();
 
 app.MapControllers();
