@@ -1,5 +1,4 @@
 using image_gallery.Services;
-using image_gallery.utils;
 using Microsoft.AspNetCore.Mvc;
 
 namespace image_gallery.Controllers;
@@ -32,8 +31,14 @@ public class ImageController : ControllerBase
     [HttpDelete("{name}")]
     public async Task<IActionResult> Delete(string name)
     {
-        bool result = await this.AzureContainerStorageCache.Delete(name);
-        return Ok(new { success = result, message = result ? "Delete successful." : "Delete failed." });
+        try
+        {
+            bool result = await this.AzureContainerStorageCache.Delete(name);
+            return Ok(new {success = result, message = result ? "Delete successful." : "Delete failed."});
+        }  catch (BadRequestException err)
+        {
+            return BadRequest(err.Message);
+        } 
     }
 
     [HttpPost]

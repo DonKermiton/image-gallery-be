@@ -98,6 +98,12 @@ public class AzureContainerStorageFacade : IAzureContainerStorageFacade
         BlobContainerClient containerClient = this.AzureContainerStorageConnector.ContainerClient!;
         BlobClient blobClient = containerClient.GetBlobClient(uuid);
         var result = await blobClient.DeleteIfExistsAsync();
+
+        if (result.Value.Equals(false))
+        {
+            throw new BadRequestException("File does not exist. Try again later"); 
+        }
+        
         return result;
     }
 

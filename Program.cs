@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices.JavaScript;
 using image_gallery.middlewares;
 using image_gallery.Services;
 using image_gallery.utils;

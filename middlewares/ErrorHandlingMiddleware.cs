@@ -1,5 +1,4 @@
 using image_gallery.Services;
-using image_gallery.utils;
 
 namespace image_gallery.middlewares;
 
