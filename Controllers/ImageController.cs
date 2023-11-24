@@ -1,3 +1,4 @@
+using image_gallery.Services;
 using image_gallery.utils;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,27 +24,35 @@ public class ImageController : ControllerBase
     }
 
     [HttpGet("{name}")]
-    public ActionResult<Uri> GetImage(string name)
+    public async Task<ActionResult<Uri>> GetImage(string name)
     {
-        return Ok(this.AzureContainerStorageCache.GetByUuid(name));
+        return Ok(this.AzureContainerStorageCache.GetByName(name));
     }
 
     [HttpDelete("{name}")]
-    public OkObjectResult Delete(string name)
+    public async Task<IActionResult> Delete(string name)
     {
-        return Ok(this.AzureContainerStorageCache.Delete(name));
+        bool result = await this.AzureContainerStorageCache.Delete(name);
+        return Ok(new { success = result, message = result ? "Delete successful." : "Delete failed." });
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post(IFormFile image)
+    public async Task<IActionResult> Post(List<IFormFile> images)
     {
         try
         {
-            var result = await this.AzureContainerStorageCache.Post(image);
+            List<ContainerFile> result = new List<ContainerFile>();
+            foreach (var image in images)
+            {
+                var e = await this.AzureContainerStorageCache.Post(image);
+                result.Add(e);
+            }
+            
             return Ok(result);
         }
         catch (BadRequestException err)
         {
+            Console.WriteLine(err);
             return BadRequest(err.Message);
         }
     }

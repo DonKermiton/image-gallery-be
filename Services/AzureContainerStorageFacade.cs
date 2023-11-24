@@ -1,11 +1,9 @@
-using Azure;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Sas;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Mvc;
+using image_gallery.utils;
 
-namespace image_gallery.utils;
+namespace image_gallery.Services;
 public class ContainerFile
 {
     public string Filename { set; get; }
@@ -21,9 +19,9 @@ public class ContainerFile
 public interface IAzureContainerStorageFacade
 {
     Task<List<ContainerFile>> Get();
-    Uri GetByUuid(string uuid);
+    Uri GetByName(string name);
     Task<ContainerFile> Post(IFormFile image);
-    Task<bool> Delete(string uuid);
+    Task<bool> Delete(string name);
 }
 
 
@@ -65,10 +63,10 @@ public class AzureContainerStorageFacade : IAzureContainerStorageFacade
         return results;
     }
 
-    public Uri GetByUuid(string uuid)
+    public Uri GetByName(string name)
     {
         BlobContainerClient containerClient = this.AzureContainerStorageConnector.ContainerClient!;
-        BlobClient blobClient = containerClient.GetBlobClient(uuid);
+        BlobClient blobClient = containerClient.GetBlobClient(name);
         return blobClient.Uri;
     }
 
