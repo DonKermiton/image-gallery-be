@@ -12,7 +12,7 @@ public class ErrorHandlingMiddleware: IMiddleware
         }
         catch (BadRequestException e)
         {
-            context.Response.StatusCode = 404;
+            context.Response.StatusCode = 400;
             await context.Response.WriteAsync(e.Message);
         }
         catch(System.Exception e)
