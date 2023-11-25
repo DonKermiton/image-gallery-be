@@ -16,6 +16,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddSingleton<IConfig, Config>();
 builder.Services.AddSingleton<IAzureContainerStorageConnector, AzureContainerStorageConnector>();
+builder.Services.AddSingleton<IAzureCosmosConnector, AzureCosmosConnector>();
 builder.Services.AddSingleton<IAzureContainerStorageFacade, AzureContainerStorageFacade>();
 builder.Services.AddScoped<ErrorHandlingMiddleware>();
 builder.Services.AddControllers();
@@ -23,8 +24,15 @@ builder.Services.AddControllers();
 
 
 var app = builder.Build();
-var startupTasks = app.Services.GetServices<IAzureContainerStorageConnector>();
-foreach(var startupTask in startupTasks)
+
+
+List<IStartupTask> asyncStartupTasks = new List<IStartupTask>
+{
+    app.Services.GetService<IAzureContainerStorageConnector>()!,
+    app.Services.GetService<IAzureCosmosConnector>()!,
+};
+
+foreach(var startupTask in asyncStartupTasks)
 {
     await startupTask.Execute();
 }

@@ -26,6 +26,7 @@ public class AzureContainerStorageConnector: IAzureContainerStorageConnector
 
     public async Task GetCloudContainer(string containerName)
     {
+        Console.WriteLine("Establishing connection to Cloud Container...");
         BlobServiceClient service = new BlobServiceClient(this.AzureConnectionString);
         BlobContainerClient containerClient = service.GetBlobContainerClient(containerName);
         await containerClient.CreateIfNotExistsAsync();

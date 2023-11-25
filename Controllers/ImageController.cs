@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using image_gallery.Services;
 using Microsoft.AspNetCore.Mvc;
 
