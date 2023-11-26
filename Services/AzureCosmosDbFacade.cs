@@ -18,9 +18,12 @@ public class AzureCosmosDbFacade : IAzureCosmosDbFacade
 {
     public IAzureCosmosConnector AzureCosmosConnector { get; set; }
 
-    public AzureCosmosDbFacade(IAzureCosmosConnector azureCosmosConnector)
+    public IAzureContainerStorageFacade AzureContainerStorageFacade { get; set; }
+
+    public AzureCosmosDbFacade(IAzureCosmosConnector azureCosmosConnector, IAzureContainerStorageFacade azureContainerStorageFacade)
     {
         this.AzureCosmosConnector = azureCosmosConnector;
+        this.AzureContainerStorageFacade = azureContainerStorageFacade;
     }
 
     public async Task<List<ImageDescription>> GetAll()
@@ -56,7 +59,7 @@ public class AzureCosmosDbFacade : IAzureCosmosDbFacade
 
         if (imageDescription.Count == 0)
         {
-            // return NotFound($"Content with id {uuid} not found");
+            throw new BadRequestException($"Content with id {id} not found");
         }
 
         return imageDescription.First();
@@ -82,9 +85,24 @@ public class AzureCosmosDbFacade : IAzureCosmosDbFacade
     
     public async Task<ItemResponse<ImageDescription>> Delete(DeleteImageRequestBody data)
     {
+        ImageDescription imageDescription = (await this.GetById(data.id));
+
+        foreach (var imageId in imageDescription.imageIds)
+        {
+            try
+            {
+                await this.AzureContainerStorageFacade.Delete(imageId);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+        
+        
         if (String.IsNullOrEmpty(data.collection))
         {
-            data.collection = (await this.GetById(data.id)).collection;
+            data.collection = imageDescription.collection;
         }
 
 
