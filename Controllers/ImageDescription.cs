@@ -62,12 +62,13 @@ public class ImageDescriptionController : ControllerBase
 
 
     [HttpDelete]
-    public async Task<IActionResult> Delete([FromBody] DeleteImageRequestBody deleteImageRequestBody)
+    [Route("{id}")]
+    public async Task<IActionResult> Delete(string id)
     {
         try
         {
-            await this.AzureCosmosDbFacade.Delete(deleteImageRequestBody);
-            return Ok("Deleted");
+            await this.AzureCosmosDbFacade.Delete(id);
+            return Ok();
         }
         catch (CosmosException ex)
         {

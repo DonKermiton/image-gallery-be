@@ -18,7 +18,8 @@ builder.Services.AddSingleton<IConfig, Config>();
 builder.Services.AddSingleton<IAzureContainerStorageConnector, AzureContainerStorageConnector>();
 builder.Services.AddSingleton<IAzureCosmosConnector, AzureCosmosConnector>();
 builder.Services.AddSingleton<IAzureContainerStorageFacade, AzureContainerStorageFacade>();
-builder.Services.AddSingleton<IAzureCosmosDbFacade, AzureCosmosDbFacade>();
+builder.Services.AddSingleton<IPostImagesCosmos, PostImagesCosmos>();
+builder.Services.AddSingleton<IAzureCosmosDbFacade, PostsCosmos>();
 builder.Services.AddScoped<ErrorHandlingMiddleware>();
 builder.Services.AddControllers();
 

@@ -19,7 +19,7 @@ public class ContainerFile
 public interface IAzureContainerStorageFacade
 {
     Task<List<ContainerFile>> Get();
-    Uri GetByName(string name);
+    string GetByName(string name);
     Task<ContainerFile> Post(IFormFile image);
     Task<bool> Delete(string name);
 }
@@ -48,6 +48,7 @@ public class AzureContainerStorageFacade : IAzureContainerStorageFacade
         this.config = config;
     }
 
+
     public async Task<List<ContainerFile>> Get()
     {
         BlobContainerClient containerClient = this.AzureContainerStorageConnector.ContainerClient!;
@@ -63,11 +64,12 @@ public class AzureContainerStorageFacade : IAzureContainerStorageFacade
         return results;
     }
 
-    public Uri GetByName(string name)
+    public string GetByName(string name)
     {
         BlobContainerClient containerClient = this.AzureContainerStorageConnector.ContainerClient!;
         BlobClient blobClient = containerClient.GetBlobClient(name);
-        return blobClient.Uri;
+        BlobSasBuilder blobSasBuilder = GetImageLink(blobClient.Name);
+        return blobClient.GenerateSasUri(blobSasBuilder).AbsoluteUri;
     }
 
     public async Task<ContainerFile> Post(IFormFile image)

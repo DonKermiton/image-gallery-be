@@ -14,10 +14,11 @@ public struct CosmosDbConnectionInfo
     public String EndpointUrl;
     public String PrimaryKey;
     public String DatabaseName;
-    public String ContainerName;
-    public String PartitionKey;
+    public String PostContainerName;
+    public String PostPartitionKey;
+    public String ImagesContainerName;
+    public String ImagesPartitionKey;
 }
-
 
 public class Config : IConfig
 {
@@ -49,11 +50,13 @@ public class Config : IConfig
     {
         this.CosmosDb = new CosmosDbConnectionInfo
         {
-            ContainerName = this.Configuration["CosmosDB:ContainerName"] ?? String.Empty,
+            PostContainerName = this.Configuration["CosmosDB:PostContainerName"] ?? String.Empty,
             DatabaseName = this.Configuration["CosmosDB:DatabaseName"] ?? String.Empty,
-            PartitionKey = this.Configuration["CosmosDB:PartitionKey"] ?? String.Empty,
+            PostPartitionKey = this.Configuration["CosmosDB:PostPartitionKey"] ?? String.Empty,
             PrimaryKey = this.Configuration["CosmosDB:PrimaryKey"] ?? String.Empty,
-            EndpointUrl = this.Configuration["CosmosDB:EndpointUrl"] ?? String.Empty
+            EndpointUrl = this.Configuration["CosmosDB:EndpointUrl"] ?? String.Empty,
+            ImagesContainerName = this.Configuration["CosmosDB:ImagesContainerName"] ?? String.Empty,
+            ImagesPartitionKey = this.Configuration["CosmosDB:ImagesPartitionKey"] ?? String.Empty,
         };
 
         foreach (FieldInfo field in this.CosmosDb.GetType().GetFields())
