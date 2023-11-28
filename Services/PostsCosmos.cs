@@ -8,10 +8,10 @@ namespace image_gallery.Services;
 public interface IAzureCosmosDbFacade
 {
     IAzureCosmosConnector AzureCosmosConnector { get; set; }
-    Task<List<ImageDescriptionWithImages>> GetAll();
-    Task<ImageDescriptionWithImages> GetById(string id);
-    Task<ItemResponse<ImageDescription>> Delete(string id);
-    Task<ImageDescription> Create(CreateImageDescriptionRequestBody data);
+    Task<List<PostRecordWithImages>> GetAll();
+    Task<PostRecordWithImages> GetById(string id);
+    Task<ItemResponse<PostRecord>> Delete(string id);
+    Task<PostRecord> Create(CreateImageDescriptionRequestBody data);
 }
 
 public class PostsCosmos : IAzureCosmosDbFacade
@@ -29,21 +29,21 @@ public class PostsCosmos : IAzureCosmosDbFacade
         this.PostImagesCosmos = postImagesCosmos;
     }
 
-    public async Task<List<ImageDescriptionWithImages>> GetAll()
+    public async Task<List<PostRecordWithImages>> GetAll()
     {
         QueryDefinition query = new QueryDefinition(
             query: "SELECT * FROM items i order by i.created DESC"
         );
 
-        FeedIterator<ImageDescription> feedIterator =
-            this.AzureCosmosConnector.PostContainer.GetItemQueryIterator<ImageDescription>(queryDefinition: query);
+        FeedIterator<PostRecord> feedIterator =
+            this.AzureCosmosConnector.PostContainer.GetItemQueryIterator<PostRecord>(queryDefinition: query);
 
-        List<ImageDescriptionWithImages> results = new List<ImageDescriptionWithImages>();
+        List<PostRecordWithImages> results = new List<PostRecordWithImages>();
 
 
         while (feedIterator.HasMoreResults)
         {
-            FeedResponse<ImageDescription> next = await feedIterator.ReadNextAsync();
+            FeedResponse<PostRecord> next = await feedIterator.ReadNextAsync();
             foreach (var post in next)
             {
                 results.Add(this.GetModel(post, await this.GetImagesByPostId(post.id)));
@@ -54,9 +54,9 @@ public class PostsCosmos : IAzureCosmosDbFacade
         return results;
     }
 
-    private ImageDescriptionWithImages GetModel(ImageDescription post, List<ContainerFile> images)
+    private PostRecordWithImages GetModel(PostRecord post, List<ContainerFile> images)
     {
-        return new ImageDescriptionWithImages(
+        return new PostRecordWithImages(
             id: post.id,
             collection: post.collection,
             title: post.title,
@@ -79,14 +79,14 @@ public class PostsCosmos : IAzureCosmosDbFacade
         return files;
     } 
 
-    public async Task<ImageDescriptionWithImages> GetById(string id)
+    public async Task<PostRecordWithImages> GetById(string id)
     {
         QueryDefinition query = new QueryDefinition(
             query: "SELECT * FROM items i WHERE i.id = @uuid"
         ).WithParameter("@uuid", id);
 
-        FeedResponse<ImageDescription> imageDescription =
-            (await this.AzureCosmosConnector.PostContainer.GetItemQueryIterator<ImageDescription>(queryDefinition: query)
+        FeedResponse<PostRecord> imageDescription =
+            (await this.AzureCosmosConnector.PostContainer.GetItemQueryIterator<PostRecord>(queryDefinition: query)
                 .ReadNextAsync());
 
         if (imageDescription.Count == 0)
@@ -106,7 +106,7 @@ public class PostsCosmos : IAzureCosmosDbFacade
         var post = imageDescription.First();
 
 
-        return new ImageDescriptionWithImages(
+        return new PostRecordWithImages(
             id: post.id,
             collection: post.collection,
             title: post.title,
@@ -116,9 +116,9 @@ public class PostsCosmos : IAzureCosmosDbFacade
         );
     }
 
-    public async Task<ImageDescription> Create(CreateImageDescriptionRequestBody data)
+    public async Task<PostRecord> Create(CreateImageDescriptionRequestBody data)
     {
-        ImageDescription newImageDescription = new(
+        PostRecord newPostRecord = new(
             id: Guid.NewGuid().ToString(),
             collection: data.Collection ?? "all",
             title: data.Title ,
@@ -126,36 +126,23 @@ public class PostsCosmos : IAzureCosmosDbFacade
             created: DateTime.Now
         );
 
-        ItemResponse<ImageDescription> response =
-            await this.AzureCosmosConnector.PostContainer.UpsertItemAsync<ImageDescription>(item: newImageDescription,
+        ItemResponse<PostRecord> response =
+            await this.AzureCosmosConnector.PostContainer.UpsertItemAsync<PostRecord>(item: newPostRecord,
                 new PartitionKey(data.Collection ?? "all"));
 
         foreach (var imageId in data.ImageIds)
         {
-            await this.PostImagesCosmos.SaveImage(newImageDescription.id, imageId);
+            await this.PostImagesCosmos.SaveImage(newPostRecord.id, imageId);
         }
         
         return response.Resource;
     } 
     
-    public async Task<ItemResponse<ImageDescription>> Delete(string id)
+    public async Task<ItemResponse<PostRecord>> Delete(string id)
     {
-        ImageDescription imageDescription = (await this.GetById(id));
+        PostRecord postRecord = (await this.GetById(id));
 
-        // foreach (var imageId in imageDescription.imageIds)
-        // {
-        //     try
-        //     {
-        //         await this.AzureContainerStorageFacade.Delete(imageId);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         Console.WriteLine(ex.Message);
-        //     }
-        // }
-        //
-     
-        return this.AzureCosmosConnector.PostContainer.DeleteItemAsync<ImageDescription>(id: imageDescription.id,
-            new PartitionKey(imageDescription.collection)).Result;
+        return this.AzureCosmosConnector.PostContainer.DeleteItemAsync<PostRecord>(id: postRecord.id,
+            new PartitionKey(postRecord.collection)).Result;
     }
 }

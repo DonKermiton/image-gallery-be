@@ -2,7 +2,7 @@ using image_gallery.Services;
 
 namespace image_gallery.Models;
 
-public record ImageDescription(
+public record PostRecord(
     String id,
     String collection,
     String title,
@@ -10,6 +10,16 @@ public record ImageDescription(
     DateTime? created
 );
 
-public record ImageDescriptionWithImages(string id, string collection, string title, string description,
-        DateTime? created, List<ContainerFile> images)
-    : ImageDescription(id, collection, title, description, created);
+public record PostRecordWithImages(
+        string id,
+        string collection,
+        string title,
+        string description,
+        DateTime? created,
+        List<ContainerFile> images
+        )
+    : PostRecord(id,
+        collection,
+        title,
+        description,
+        created);

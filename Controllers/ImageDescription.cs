@@ -29,25 +29,25 @@ public class ImageDescriptionController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetSelectedDescription()
+    public async Task<IActionResult> GetAll()
     {
         return Ok(await this.AzureCosmosDbFacade.GetAll());
     }
 
     [HttpGet]
     [Route("{uuid}")]
-    public async Task<IActionResult> GetSelectedDescription(string uuid)
+    public async Task<IActionResult> GetById(string uuid)
     {
         return Ok(await this.AzureCosmosDbFacade.GetById(uuid));
     }
 
     [HttpPost]
-    public async Task<IActionResult> GetImageDescriptionByName(
+    public async Task<IActionResult> Create(
         [FromBody] CreateImageDescriptionRequestBody imageDescription)
     {
         try
         {
-            ImageDescription response = await this.AzureCosmosDbFacade.Create(imageDescription); 
+            PostRecord response = await this.AzureCosmosDbFacade.Create(imageDescription); 
             return Created(new Uri(
                     $"image-description/{response.id}",
                     UriKind.Relative),
